@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,6 +36,9 @@ class _MyAppState extends State<MyAppWidget> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
+        appBar: AppBar(
+          title: Text('Bottom Navigation Demo'),
+        ),
       bottomNavigationBar: buildNavigationBar(),
       body: <Widget>[
         /// Home page
@@ -43,6 +49,7 @@ class _MyAppState extends State<MyAppWidget> {
 
         /// Messages page
         buildListView(theme),
+
       ][currentPageIndex],
     );
   }
@@ -58,30 +65,33 @@ class _MyAppState extends State<MyAppWidget> {
       selectedIndex: currentPageIndex,
       destinations: const <Widget>[
         NavigationDestination(
-          selectedIcon: Icon(Icons.home),
+          selectedIcon: Icon(Icons.search_rounded),
           icon: Icon(Icons.home_outlined),
-          label: 'Home',
+          label: 'Search',
         ),
         NavigationDestination(
-          icon: Badge(child: Icon(Icons.notifications_sharp)),
+          icon: Badge(child: Icon(Icons.list)),
           label: 'Matches',
         ),
         NavigationDestination(
           icon: Badge(
             label: Text('2'),
-            child: Icon(Icons.account_tree_outlined),
+            child: Icon(Icons.details),
           ),
-          label: 'Other',
+          label: 'Details',
         ),
       ],
     );
   }
 
+
+
   ListView buildListView(ThemeData theme) {
     return ListView.builder(
         reverse: true,
-        itemCount: 2,
+        itemCount: 3,
         itemBuilder: (BuildContext context, int index) {
+          if (index ==2) {return buildLinkify();}
             return buildListEntry(theme, index);
         },
       );
@@ -149,19 +159,51 @@ class _MyAppState extends State<MyAppWidget> {
       );
   }
 
+
+
+
+
   Card buildCard(ThemeData theme) {
     return Card(
         shadowColor: Colors.transparent,
         margin: const EdgeInsets.all(8.0),
         child: SizedBox.expand(
           child: Center(
-            child: Text(
-              'Home page',
-              style: theme.textTheme.titleLarge,
-            ),
+            child: CarouselSlider(
+              options: CarouselOptions(height: 400.0),
+              items: [1,2,3,4,5].map((i) {
+                return Builder(
+                  builder: (BuildContext context) {
+                    return Container(
+                        width: MediaQuery.of(context).size.width,
+                        margin: EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                            color: Colors.amber
+                        ),
+                        child: Text('text $i', style: TextStyle(fontSize: 16.0),)
+                    );
+                  },
+                );
+              }).toList(),
+            )
           ),
         ),
       );
+
+  }
+
+  Linkify buildLinkify() {
+    return Linkify(
+      onOpen: (link) async {
+        print("Link is:");
+        print(link.url);
+        print(":");
+        if (!await launchUrl(Uri.parse(link.url))) {
+          throw Exception('Could not launch ${link.url}');
+        }
+      },
+      text: "For more information, visit https://www.example.com",
+    );
   }
 }
 
