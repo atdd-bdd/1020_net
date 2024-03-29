@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'event.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,27 +32,36 @@ class MyAppWidget extends StatefulWidget {
 }
 
 var entries = ["a","b","c"];
-
+var events = [MyEvent(title:"First"), MyEvent(title:"Second"),
+  MyEvent(title:"Third")];
 class _MyAppState extends State<MyAppWidget> {
   int currentPageIndex = 0;
+  //  Try out the geo code
+  String address = "Durham, NC";
+
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    String url = "https://geocode.maps.co/search?q=" +
+        address+ "&api_key=65edd11b7f07a815035540vhz5b8f4e";
+    // https://geocode.maps.co/search?q=%22621%20Broad%20St%20Durham,%20NC%22%20&api_key=65edd11b7f07a815035540vhz5b8f4e
+    // // print(value);
+    // [{"place_id":307652039,"licence":"Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright","osm_type":"node","osm_id":266814250,"boundingbox":["36.0070492","36.0071492","-78.9206063","-78.9205063"],"lat":"36.0070992","lon":"-78.9205563","display_name":"Whole Foods Market, 621, Broad Street, Old West Durham, Durham, Durham County, North Carolina, 27705, United States","class":"shop","type":"supermarket","importance":0.4200099999999999}]
+  // [] if not found
     return Scaffold(
         appBar: AppBar(
           title: Text('Bottom Navigation Demo'),
         ),
       bottomNavigationBar: buildNavigationBar(),
       body: <Widget>[
-        /// Home page
-        buildCard(theme),
 
-        /// Notifications page
-        buildPadding(),
+        buildSearch(theme),
+
+        buildResults(theme),
 
         /// Messages page
-        buildListView(theme),
+        buildDetailList(theme),
 
       ][currentPageIndex],
     );
@@ -75,7 +88,7 @@ class _MyAppState extends State<MyAppWidget> {
         ),
         NavigationDestination(
           icon: Badge(
-            label: Text('2'),
+
             child: Icon(Icons.details),
           ),
           label: 'Details',
@@ -86,7 +99,7 @@ class _MyAppState extends State<MyAppWidget> {
 
 
 
-  ListView buildListView(ThemeData theme) {
+  ListView buildDetail(ThemeData theme) {
     return ListView.builder(
         reverse: true,
         itemCount: 3,
@@ -127,7 +140,8 @@ class _MyAppState extends State<MyAppWidget> {
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Text(
-               entries[index],
+               //events[index].title,
+                entries[index],
                 style: theme.textTheme.bodyLarge!
                     .copyWith(color: theme.colorScheme.onPrimary),
               ),
@@ -135,7 +149,7 @@ class _MyAppState extends State<MyAppWidget> {
           );
   }
 
-  Padding buildPadding() {
+  Padding buildResults(ThemeData theme) {
     return const Padding(
         padding: EdgeInsets.all(8.0),
         child: Column(
@@ -163,7 +177,7 @@ class _MyAppState extends State<MyAppWidget> {
 
 
 
-  Card buildCard(ThemeData theme) {
+  Card buildSearch(ThemeData theme) {
     return Card(
         shadowColor: Colors.transparent,
         margin: const EdgeInsets.all(8.0),
@@ -180,7 +194,10 @@ class _MyAppState extends State<MyAppWidget> {
                         decoration: BoxDecoration(
                             color: Colors.amber
                         ),
-                        child: Text('text $i', style: TextStyle(fontSize: 16.0),)
+                        child:
+                       buildDetailList(theme)
+                       // Text('text $i', style: TextStyle(fontSize: 16.0),)
+
                     );
                   },
                 );
@@ -192,12 +209,32 @@ class _MyAppState extends State<MyAppWidget> {
 
   }
 
+  ListView buildDetailList(ThemeData theme){
+    return ListView (
+      children: const <Widget> [
+        Row ( children: <Widget>[
+        Text("Hello"),
+        Text("Another Hello")
+        ]
+    ),
+    Row ( children: <Widget>[
+    Text("Hello2"),
+    Text("Another Hello3"),
+  //     FilledButton(onPressed: (link) async {
+  //
+  //   if (!await launchUrl(Uri.parse(link.url))) {
+  //   throw Exception('Could not launch ${link.url}');
+  // },)
+    ]
+    )
+    ]
+    );
+  }
+
   Linkify buildLinkify() {
     return Linkify(
       onOpen: (link) async {
-        print("Link is:");
-        print(link.url);
-        print(":");
+
         if (!await launchUrl(Uri.parse(link.url))) {
           throw Exception('Could not launch ${link.url}');
         }
@@ -207,3 +244,57 @@ class _MyAppState extends State<MyAppWidget> {
   }
 }
 
+class MyEvent {
+  var uuid = UUID();
+  var id = "000000001";
+  var title ="";
+  var startDate = MyDateTime.now();
+  var endDate = MyDateTime.now();
+  var location = "1 Apple Lane, Somewhere, VT";
+  var geoLocation = MyGeoLocation(0.0,0.0);
+  var description = "Something";
+  var tags ="#tag";
+  var linkString = "https://1020.net";
+  var imageString = "https://1020.net";
+  var thumbnailString = "https://1020.net";
+  MyEvent({id= "Default ID", title="Default Title",
+    MyDateTime? startDateIn, MyDateTime? endDateIn,
+    location ="",
+    MyGeoLocation? geoLocationIn,
+    description ="", tags =""}):
+        startDate  = startDateIn ?? MyDateTime.now(),
+        endDate = endDateIn ?? MyDateTime.now(),
+        geoLocation = geoLocationIn ?? MyGeoLocation.here(),
+        id = id,
+        title = title,
+        tags = tags,
+        description = description
+  {
+  }
+}
+class MyDateTime {
+  var dateTime = DateTime(2024);
+
+  MyDateTime(DateTime dt) {
+    this.dateTime = dt;
+  }
+  static now()
+  {
+    return MyDateTime(DateTime.now());
+  }
+
+}
+
+class MyGeoLocation {
+  double latitude = 0.0; // Latitude, in degrees
+  double longitude = 0.0; // Longitude, in degrees
+  MyGeoLocation(this.latitude, this.longitude);
+  static here()
+  {
+    return MyGeoLocation(0.0,0.0);
+  }
+}
+
+class UUID {
+  var value = ByteData(16);
+}
